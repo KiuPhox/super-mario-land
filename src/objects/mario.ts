@@ -185,13 +185,8 @@ export class Mario extends Phaser.GameObjects.Sprite {
     }
 
     public bounceUpAfterHitEnemyOnHead(): void {
-        this.currentScene.add.tween({
-            targets: this,
-            props: { y: this.y - 5 },
-            duration: 200,
-            ease: 'Power1',
-            yoyo: true,
-        })
+        this.body.setVelocityY(-100)
+        this.isJumping = true
     }
 
     public gotHit(): void {

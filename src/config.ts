@@ -2,16 +2,14 @@ import { BootScene } from './scenes/boot-scene'
 import { GameScene } from './scenes/game-scene'
 import { HUDScene } from './scenes/hud-scene'
 import { MenuScene } from './scenes/menu-scene'
+import AnimatedTiles from './plugins/AnimatedTiles'
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
     title: 'Super Mario Land',
     zoom: 5,
     type: Phaser.WEBGL,
     scale: {
-        width:
-            window.innerWidth > window.innerHeight
-                ? (144 * window.innerWidth) / window.innerHeight
-                : 160,
+        width: 160,
         height: 144,
         parent: 'phaser-game',
         mode: Phaser.Scale.FIT,
@@ -23,12 +21,20 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     },
     physics: {
         default: 'arcade',
-
         arcade: {
             // debug: true,
             gravity: { y: 475 },
         },
     },
-    backgroundColor: '#f8f8f8',
+    plugins: {
+        scene: [
+            {
+                key: 'animatedTiles',
+                plugin: AnimatedTiles,
+                mapping: 'animatedTiles',
+            },
+        ],
+    },
+    backgroundColor: '#e2f3e4',
     render: { pixelArt: true, antialias: false },
 }

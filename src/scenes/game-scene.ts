@@ -5,6 +5,7 @@ import { Goomba } from '../objects/goomba'
 import { Mario } from '../objects/mario'
 import { Platform } from '../objects/platform'
 import { Portal } from '../objects/portal'
+import AnimatedTiles from '../plugins/AnimatedTiles'
 
 export class GameScene extends Phaser.Scene {
     // tilemap
@@ -21,6 +22,8 @@ export class GameScene extends Phaser.Scene {
     private platforms: Phaser.GameObjects.Group
     private player: Mario
     private portals: Phaser.GameObjects.Group
+
+    private animatedTiles: AnimatedTiles
 
     constructor() {
         super({
@@ -42,6 +45,7 @@ export class GameScene extends Phaser.Scene {
         // add our tileset and layers to our tilemap
 
         this.tileset = this.map.addTilesetImage('tiles') as Phaser.Tilemaps.Tileset
+        this.animatedTiles.init(this.map)
 
         this.backgroundLayer = this.map.createLayer(
             'backgroundLayer',
@@ -135,7 +139,6 @@ export class GameScene extends Phaser.Scene {
 
         objects.forEach((object) => {
             if (object.type === 'portal') {
-                console.log(object.props)
                 this.portals.add(
                     new Portal({
                         scene: this,
@@ -150,18 +153,14 @@ export class GameScene extends Phaser.Scene {
                         },
                     }).setName(object.name)
                 )
-            }
-
-            if (object.type === 'player') {
+            } else if (object.type === 'player') {
                 this.player = new Mario({
                     scene: this,
                     x: this.registry.get('spawn').x,
                     y: this.registry.get('spawn').y,
                     texture: 'mario',
                 })
-            }
-
-            if (object.type === 'goomba') {
+            } else if (object.type === 'goomba') {
                 this.enemies.add(
                     new Goomba({
                         scene: this,
@@ -170,9 +169,7 @@ export class GameScene extends Phaser.Scene {
                         texture: 'goomba',
                     })
                 )
-            }
-
-            if (object.type === 'brick') {
+            } else if (object.type === 'brick') {
                 this.bricks.add(
                     new Brick({
                         scene: this,
@@ -182,9 +179,7 @@ export class GameScene extends Phaser.Scene {
                         value: 50,
                     })
                 )
-            }
-
-            if (object.type === 'box') {
+            } else if (object.type === 'box') {
                 this.boxes.add(
                     new Box({
                         scene: this,
@@ -194,9 +189,7 @@ export class GameScene extends Phaser.Scene {
                         texture: 'box',
                     })
                 )
-            }
-
-            if (object.type === 'collectible') {
+            } else if (object.type === 'collectible') {
                 this.collectibles.add(
                     new Collectible({
                         scene: this,
@@ -206,42 +199,72 @@ export class GameScene extends Phaser.Scene {
                         points: 100,
                     })
                 )
-            }
-
-            if (object.type === 'platformMovingUpAndDown') {
-                this.platforms.add(
-                    new Platform({
-                        scene: this,
-                        x: object.x,
-                        y: object.y,
-                        texture: 'platform',
-                        tweenProps: {
-                            y: {
-                                value: 50,
-                                duration: 1500,
-                                ease: 'Power0',
+            } else if (object.type === 'movingPlatform') {
+                if (object.properties[0].value === 'up') {
+                    this.platforms.add(
+                        new Platform({
+                            scene: this,
+                            x: object.x,
+                            y: object.y,
+                            texture: 'platform',
+                            tweenProps: {
+                                y: {
+                                    value: 50,
+                                    duration: 1500,
+                                    ease: 'Power0',
+                                },
                             },
-                        },
-                    })
-                )
-            }
-
-            if (object.type === 'platformMovingLeftAndRight') {
-                this.platforms.add(
-                    new Platform({
-                        scene: this,
-                        x: object.x,
-                        y: object.y,
-                        texture: 'platform',
-                        tweenProps: {
-                            x: {
-                                value: object.x + 50,
-                                duration: 1200,
-                                ease: 'Power0',
+                        })
+                    )
+                } else if (object.properties[0].value === 'down') {
+                    this.platforms.add(
+                        new Platform({
+                            scene: this,
+                            x: object.x,
+                            y: object.y,
+                            texture: 'platform',
+                            tweenProps: {
+                                y: {
+                                    value: 100,
+                                    duration: 1500,
+                                    ease: 'Power0',
+                                },
                             },
-                        },
-                    })
-                )
+                        })
+                    )
+                } else if (object.properties[0].value === 'right') {
+                    this.platforms.add(
+                        new Platform({
+                            scene: this,
+                            x: object.x,
+                            y: object.y,
+                            texture: 'platform',
+                            tweenProps: {
+                                x: {
+                                    value: object.x + 50,
+                                    duration: 1200,
+                                    ease: 'Power0',
+                                },
+                            },
+                        })
+                    )
+                } else if (object.properties[0].value === 'left') {
+                    this.platforms.add(
+                        new Platform({
+                            scene: this,
+                            x: object.x,
+                            y: object.y,
+                            texture: 'platform',
+                            tweenProps: {
+                                x: {
+                                    value: object.x - 50,
+                                    duration: 1200,
+                                    ease: 'Power0',
+                                },
+                            },
+                        })
+                    )
+                }
             }
         })
     }
@@ -338,7 +361,7 @@ export class GameScene extends Phaser.Scene {
     ) => {
         const player = object1 as Mario
         const portal = object2 as Portal
-        console.log(portal.getPortalDestination().dir)
+
         if (
             (player.getKeys().get('DOWN')?.isDown &&
                 portal.getPortalDestination().dir === 'down') ||
@@ -346,6 +369,9 @@ export class GameScene extends Phaser.Scene {
         ) {
             // set new level and new destination for mario
             this.registry.set('level', portal.name)
+
+            this.registry.set('world', '1-' + portal.name[5])
+
             this.registry.set('spawn', {
                 x: portal.getPortalDestination().x,
                 y: portal.getPortalDestination().y,
@@ -353,7 +379,7 @@ export class GameScene extends Phaser.Scene {
             })
 
             // restart the game scene
-            this.scene.restart()
+            this.scene.restart().launch('HUDScene')
         } else if (portal.name === 'exit') {
             this.scene.stop('GameScene')
             this.scene.stop('HUDScene')
