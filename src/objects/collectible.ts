@@ -1,6 +1,6 @@
 import { ICollectibleConstructor } from '../interfaces/collectible'
 
-export class Collectible extends Phaser.GameObjects.Sprite {
+export default class Collectible extends Phaser.GameObjects.Sprite {
     body: Phaser.Physics.Arcade.Body
 
     // variables

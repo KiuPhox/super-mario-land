@@ -1,13 +1,12 @@
-import { Box } from '../objects/box'
-import { Brick } from '../objects/brick'
-import { Collectible } from '../objects/collectible'
-import { Goomba } from '../objects/goomba'
-import { Mario } from '../objects/mario'
-import { Platform } from '../objects/platform'
-import { Portal } from '../objects/portal'
-import AnimatedTiles from '../plugins/AnimatedTiles'
+import Box from '../objects/Box'
+import Brick from '../objects/Brick'
+import Collectible from '../objects/Collectible'
+import Goomba from '../objects/Goomba'
+import Mario from '../objects/Mario'
+import Platform from '../objects/Platform'
+import Portal from '../objects/Portal'
 
-export class GameScene extends Phaser.Scene {
+export default class GameScene extends Phaser.Scene {
     // tilemap
     private map: Phaser.Tilemaps.Tilemap
     private tileset: Phaser.Tilemaps.Tileset
@@ -22,13 +21,23 @@ export class GameScene extends Phaser.Scene {
     private platforms: Phaser.GameObjects.Group
     private player: Mario
     private portals: Phaser.GameObjects.Group
+    private projectiles: Phaser.Physics.Arcade.Group
 
-    private animatedTiles: AnimatedTiles
+    private animatedTiles: any
 
     constructor() {
         super({
             key: 'GameScene',
         })
+    }
+
+    preload(): void {
+        this.load.scenePlugin(
+            'AnimatedTiles',
+            'https://raw.githubusercontent.com/nkholski/phaser-animated-tiles/master/dist/AnimatedTiles.js',
+            'animatedTiles',
+            'animatedTiles'
+        )
     }
 
     init(): void {
@@ -45,7 +54,6 @@ export class GameScene extends Phaser.Scene {
         // add our tileset and layers to our tilemap
 
         this.tileset = this.map.addTilesetImage('tiles') as Phaser.Tilemaps.Tileset
-        this.animatedTiles.init(this.map)
 
         this.backgroundLayer = this.map.createLayer(
             'backgroundLayer',
@@ -71,6 +79,16 @@ export class GameScene extends Phaser.Scene {
         this.portals = this.add.group({
             /*classType: Portal,*/
             runChildUpdate: true,
+        })
+
+        this.projectiles = this.physics.add.group({
+            defaultKey: 'projectile',
+            runChildUpdate: true,
+            bounceX: 1,
+            bounceY: 1,
+            velocityX: 100,
+            velocityY: 100,
+            gravityY: 0,
         })
 
         this.boxes = this.add.group({
@@ -104,11 +122,16 @@ export class GameScene extends Phaser.Scene {
         // *****************************************************************
         this.physics.add.collider(this.player, this.foregroundLayer)
         this.physics.add.collider(this.enemies, this.foregroundLayer)
+        this.physics.add.collider(this.projectiles, this.foregroundLayer)
         this.physics.add.collider(this.enemies, this.boxes)
         this.physics.add.collider(this.enemies, this.bricks)
+        this.physics.add.collider(this.projectiles, this.boxes)
+        this.physics.add.collider(this.projectiles, this.bricks)
         this.physics.add.collider(this.player, this.bricks)
 
         this.physics.add.collider(this.player, this.boxes, this.playerHitBox)
+
+        this.physics.add.overlap(this.projectiles, this.enemies, this.handleProjectileEnemyOverlap)
 
         this.physics.add.overlap(this.player, this.enemies, this.handlePlayerEnemyOverlap)
 
@@ -127,14 +150,16 @@ export class GameScene extends Phaser.Scene {
         // *****************************************************************
         this.cameras.main.startFollow(this.player)
         this.cameras.main.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels)
+        this.animatedTiles.init(this.map)
     }
 
-    update(): void {
-        this.player.update()
+    update(time: number, delta: number): void {
+        this.player.update(time, delta)
     }
 
     private loadObjectsFromTilemap() {
         // get the object layer in the tilemap named 'objects'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const objects = this.map.getObjectLayer('objects')?.objects as any[]
 
         objects.forEach((object) => {
@@ -159,6 +184,7 @@ export class GameScene extends Phaser.Scene {
                     x: this.registry.get('spawn').x,
                     y: this.registry.get('spawn').y,
                     texture: 'mario',
+                    projectiles: this.projectiles,
                 })
             } else if (object.type === 'goomba') {
                 this.enemies.add(
@@ -295,6 +321,28 @@ export class GameScene extends Phaser.Scene {
                 player.gotHit()
             }
         }
+    }
+
+    handleProjectileEnemyOverlap = (
+        object1: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody,
+        object2: Phaser.Tilemaps.Tile | Phaser.Types.Physics.Arcade.GameObjectWithBody
+    ) => {
+        const enemy = object1 as Goomba
+        const projectile = object2 as Phaser.GameObjects.Sprite
+
+        this.projectiles.killAndHide(projectile)
+
+        enemy.gotHitOnHead()
+        this.add.tween({
+            targets: enemy,
+            props: { alpha: 0 },
+            duration: 1000,
+            ease: 'Power0',
+            yoyo: false,
+            onComplete: function () {
+                enemy.isDead()
+            },
+        })
     }
 
     /**

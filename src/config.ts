@@ -1,8 +1,7 @@
-import { BootScene } from './scenes/boot-scene'
-import { GameScene } from './scenes/game-scene'
-import { HUDScene } from './scenes/hud-scene'
-import { MenuScene } from './scenes/menu-scene'
-import AnimatedTiles from './plugins/AnimatedTiles'
+import BootScene from './scenes/BootScene'
+import GameScene from './scenes/GameScene'
+import HUDScene from './scenes/HudScene'
+import MenuScene from './scenes/MenuScene'
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
     title: 'Super Mario Land',
@@ -22,18 +21,9 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
     physics: {
         default: 'arcade',
         arcade: {
-            // debug: true,
+            debug: true,
             gravity: { y: 475 },
         },
-    },
-    plugins: {
-        scene: [
-            {
-                key: 'animatedTiles',
-                plugin: AnimatedTiles,
-                mapping: 'animatedTiles',
-            },
-        ],
     },
     backgroundColor: '#e2f3e4',
     render: { pixelArt: true, antialias: false },

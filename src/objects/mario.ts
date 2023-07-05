@@ -1,6 +1,8 @@
-import { ISpriteConstructor } from '../interfaces/sprite'
+import { IMario } from '../interfaces/sprite'
 
-export class Mario extends Phaser.GameObjects.Sprite {
+const SHOOT_DELAY = 500
+
+export default class Mario extends Phaser.GameObjects.Sprite {
     body: Phaser.Physics.Arcade.Body
 
     // variables
@@ -11,6 +13,8 @@ export class Mario extends Phaser.GameObjects.Sprite {
     private isDying: boolean
     private isVulnerable: boolean
     private vulnerableCounter: number
+    private shootTimer: number
+    private projectiles: Phaser.Physics.Arcade.Group
 
     // input
     private keys: Map<string, Phaser.Input.Keyboard.Key>
@@ -23,12 +27,14 @@ export class Mario extends Phaser.GameObjects.Sprite {
         return this.isVulnerable
     }
 
-    constructor(aParams: ISpriteConstructor) {
+    constructor(aParams: IMario) {
         super(aParams.scene, aParams.x, aParams.y, aParams.texture, aParams.frame)
 
+        this.projectiles = aParams.projectiles
         this.currentScene = aParams.scene
         this.initSprite()
         this.currentScene.add.existing(this)
+        this.shootTimer = 0
     }
 
     private initSprite() {
@@ -50,6 +56,7 @@ export class Mario extends Phaser.GameObjects.Sprite {
             ['RIGHT', this.addKey('RIGHT')],
             ['DOWN', this.addKey('DOWN')],
             ['JUMP', this.addKey('SPACE')],
+            ['SHOOT', this.addKey('E')],
         ])
 
         // physics
@@ -63,9 +70,9 @@ export class Mario extends Phaser.GameObjects.Sprite {
         return this.currentScene.input.keyboard?.addKey(key) as Phaser.Input.Keyboard.Key
     }
 
-    update(): void {
+    update(time: number, delta: number): void {
         if (!this.isDying) {
-            this.handleInput()
+            this.handleInput(delta)
             this.handleAnimations()
         } else {
             this.setFrame(12)
@@ -86,7 +93,7 @@ export class Mario extends Phaser.GameObjects.Sprite {
         }
     }
 
-    private handleInput() {
+    private handleInput(delta: number): void {
         if (this.y > this.currentScene.sys.canvas.height) {
             // mario fell into a hole
             this.isDying = true
@@ -115,6 +122,20 @@ export class Mario extends Phaser.GameObjects.Sprite {
         if (this.keys.get('JUMP')?.isDown && !this.isJumping) {
             this.body.setVelocityY(-180)
             this.isJumping = true
+        }
+
+        // handle shooting
+        if ((this.shootTimer -= delta) < 0 && this.keys.get('SHOOT')?.isDown) {
+            this.projectiles
+                .get(this.x, this.y)
+                .setActive(true)
+                .setVisible(true)
+                .body?.setAllowGravity(false)
+                .setVelocityX(this.flipX ? -100 : 100)
+
+            this.shootTimer = SHOOT_DELAY
+            this.currentScene.registry.values.coins = this.currentScene.registry.values.coins - 1
+            this.scene.events.emit('coinsChanged')
         }
     }
 

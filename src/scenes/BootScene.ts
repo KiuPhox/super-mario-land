@@ -1,6 +1,6 @@
 import { AnimationHelper } from '../helpers/animation-helper'
 
-export class BootScene extends Phaser.Scene {
+export default class BootScene extends Phaser.Scene {
     // helpers
     private animationHelperInstance: AnimationHelper
 

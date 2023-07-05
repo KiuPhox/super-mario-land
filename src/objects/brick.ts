@@ -1,6 +1,6 @@
 import { IBrickConstructor } from '../interfaces/brick'
 
-export class Brick extends Phaser.GameObjects.Sprite {
+export default class Brick extends Phaser.GameObjects.Sprite {
     body: Phaser.Physics.Arcade.Body
 
     // variables

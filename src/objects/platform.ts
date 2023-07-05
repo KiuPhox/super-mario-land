@@ -1,11 +1,15 @@
 import { IPlatformConstructor } from '../interfaces/platform'
 
-export class Platform extends Phaser.GameObjects.Image {
+export default class Platform extends Phaser.GameObjects.Image {
     body: Phaser.Physics.Arcade.Body
 
     // variables
     private currentScene: Phaser.Scene
-    private tweenProps: any
+    private tweenProps:
+        | string
+        | number
+        | Phaser.Types.Tweens.GetEndCallback
+        | Phaser.Types.Tweens.TweenPropConfig
 
     constructor(aParams: IPlatformConstructor) {
         super(aParams.scene, aParams.x, aParams.y, aParams.texture, aParams.frame)

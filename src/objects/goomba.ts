@@ -1,7 +1,7 @@
-import { Enemy } from './enemy'
+import { Enemy } from './Enemy'
 import { ISpriteConstructor } from '../interfaces/sprite'
 
-export class Goomba extends Enemy {
+export default class Goomba extends Enemy {
     body: Phaser.Physics.Arcade.Body
 
     constructor(aParams: ISpriteConstructor) {
